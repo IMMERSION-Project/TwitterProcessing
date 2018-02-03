@@ -1,2 +1,2 @@
 # TwitterProcessing
-Project to try to integrate Twitter API with Processing in Java
+Project to try to integrate twitter_viz.Twitter API with Processing in Java

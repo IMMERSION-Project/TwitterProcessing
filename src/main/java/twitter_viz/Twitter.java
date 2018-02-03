@@ -1,28 +1,14 @@
-import io.github.cdimascio.dotenv.Dotenv;
+package twitter_viz;
+
 import processing.core.PApplet;
+import service.DotEnvService;
 import twitter4j.*;
 import twitter4j.conf.ConfigurationBuilder;
 
-import java.net.URISyntaxException;
 import java.util.*;
 
 public class Twitter extends PApplet {
     private twitter4j.Twitter twitter;
-    private Dotenv dotenv;
-
-    public Twitter() {
-        final String path;
-        try {
-            path = Twitter.class.getResource(".env").toURI().getPath();
-            System.out.println(path);
-            dotenv = Dotenv.configure()
-                    .directory(path.substring(0, path.length()-4))
-                    .load();
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-            throw new IllegalStateException("Twitter is not initalized");
-        }
-    }
 
     @Override
     public void settings() {
@@ -36,10 +22,10 @@ public class Twitter extends PApplet {
 
         //Authentification
         ConfigurationBuilder cb = new ConfigurationBuilder();
-        cb.setOAuthConsumerKey(dotenv.get("consumer.key"));
-        cb.setOAuthConsumerSecret(dotenv.get("consumer.secret"));
-        cb.setOAuthAccessToken(dotenv.get("access.token.key"));
-        cb.setOAuthAccessTokenSecret(dotenv.get("access.token.secret"));
+        cb.setOAuthConsumerKey(DotEnvService.get("consumer.key"));
+        cb.setOAuthConsumerSecret(DotEnvService.get("consumer.secret"));
+        cb.setOAuthAccessToken(DotEnvService.get("access.token.key"));
+        cb.setOAuthAccessTokenSecret(DotEnvService.get("access.token.secret"));
         //Utilisation des informations d'authentification pour se connecter à l'API twitter
         TwitterFactory twitterFactory = new TwitterFactory(cb.build());
         twitter = twitterFactory.getInstance();
@@ -55,25 +41,22 @@ public class Twitter extends PApplet {
 
         //Essai
         try {
-            final Query request = new Query("#prestige");
+            final Query request = new Query("#LOSCPSG");
             final QueryResult result = twitter.search(request);
 
             final List<Status> tweets = result.getTweets();
             final int[] index = {0};
             final int[] data = tweets.stream().mapToInt(tweet -> tweet.getText().length()).toArray();
-            tweets.forEach(tweet -> {
-                final User user = tweet.getUser();
-
-                final String userName = user.getName();
-                final String message = tweet.getText();
-                final String pseudo = user.getScreenName();
-
-                final Date createdAt = tweet.getCreatedAt();
+            tweets.forEach(status -> {
+                final Tweet tweet = TweetFactory.newTweet(status);
+                System.out.println(tweet);
+//                System.out.println(status.getPlace());
+                System.out.println("fav: " + status.getFavoriteCount() + ", ret: " + status.getRetweetCount());
 
                 fill(255);
                 textSize(10);
 //                text(message, 10, 15 + 30 * index[0]++);
-                rect(index[0]*20, 0, 20, data[index[0]]);
+                rect(index[0] * 20, 0, 20, data[index[0]]);
                 index[0]++;
             });
         } catch (TwitterException e) {
@@ -81,7 +64,7 @@ public class Twitter extends PApplet {
         }
     }
 
-    static public void main(String[] passedArgs) {
-        PApplet.main("Twitter");
+    public static void main(String[] passedArgs) {
+        PApplet.main("twitter_viz.Twitter");
     }
 }
